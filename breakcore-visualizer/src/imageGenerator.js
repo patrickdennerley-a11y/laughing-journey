@@ -23,16 +23,23 @@ const IMAGE_HEIGHT = 600;
  */
 export function generateImagePlaylist() {
   const playlist = [];
+  const timestamp = Date.now();
 
   for (let i = 0; i < IMAGE_COUNT; i++) {
-    // Distribute keywords evenly across all images
-    const keywordIndex = i % KEYWORDS.length;
-    const keyword = KEYWORDS[keywordIndex];
+    // Pick a RANDOM keyword instead of cycling through them
+    const keyword = KEYWORDS[Math.floor(Math.random() * KEYWORDS.length)];
 
-    // Create URL with keyword and unique lock parameter for cache-busting
+    // Randomize dimensions slightly to get different images
+    const width = IMAGE_WIDTH + Math.floor(Math.random() * 200) - 100; // 700-900
+    const height = IMAGE_HEIGHT + Math.floor(Math.random() * 200) - 100; // 500-700
+
+    // Create highly randomized lock parameter
+    const randomSeed = Math.floor(Math.random() * 999999);
+    const lockParam = timestamp + i + randomSeed;
+
     // Replace spaces with commas for loremflickr compatibility
     const formattedKeyword = keyword.replace(/\s+/g, ',');
-    const url = `https://loremflickr.com/${IMAGE_WIDTH}/${IMAGE_HEIGHT}/${formattedKeyword}?lock=${i}`;
+    const url = `https://loremflickr.com/${width}/${height}/${formattedKeyword}?lock=${lockParam}`;
 
     playlist.push({
       url,
