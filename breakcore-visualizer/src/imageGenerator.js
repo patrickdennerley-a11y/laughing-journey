@@ -31,7 +31,7 @@ const KEYWORDS = [
   'birth death process chain'
 ];
 
-const IMAGE_COUNT = 2000;
+const IMAGE_COUNT = 3600; // 30 FPS × 120 seconds = 3600 images
 const IMAGE_WIDTH = 800;
 const IMAGE_HEIGHT = 600;
 

@@ -2,11 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { generateImagePlaylist, getRandomKeyword } from './imageGenerator';
 import './BreakcoreVisualizer.css';
 
-const FPS = 60; // Doubled to 60 FPS for true breakcore speed
-const FRAME_DURATION = 1000 / FPS; // ~16ms
+const FPS = 30; // 30 frames per second for strobe effect
+const FRAME_DURATION = 1000 / FPS; // ~33ms
+const TOTAL_DURATION = 120; // 120 seconds (2 minutes)
+const TOTAL_FRAMES = FPS * TOTAL_DURATION; // 3600 frames
 
 function BreakcoreVisualizer() {
-  const [started, setStarted] = useState(false);
+  const [phase, setPhase] = useState('warning'); // warning, loading, playing
+  const [loadProgress, setLoadProgress] = useState(0);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [filters, setFilters] = useState({});
   const [showText, setShowText] = useState(false);
@@ -15,31 +18,57 @@ function BreakcoreVisualizer() {
 
   const playlistRef = useRef([]);
   const intervalRef = useRef(null);
-  const preloadedImagesRef = useRef(new Set());
+  const preloadedImagesRef = useRef([]);
+  const loadedCountRef = useRef(0);
 
   // Generate playlist on mount
   useEffect(() => {
     playlistRef.current = generateImagePlaylist();
   }, []);
 
-  // Aggressively preload images to prevent lag
-  useEffect(() => {
-    if (started && playlistRef.current.length > 0) {
-      // Preload next 200 images aggressively
-      const startIdx = currentFrame;
-      const endIdx = Math.min(startIdx + 200, playlistRef.current.length);
+  // Preload ALL images
+  const preloadAllImages = async () => {
+    setPhase('loading');
+    setLoadProgress(0);
+    loadedCountRef.current = 0;
 
-      for (let i = startIdx; i < endIdx; i++) {
-        const url = playlistRef.current[i].url;
-        if (!preloadedImagesRef.current.has(url)) {
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          img.src = url;
-          preloadedImagesRef.current.add(url);
-        }
-      }
+    const totalImages = playlistRef.current.length;
+    const imagePromises = [];
+
+    for (let i = 0; i < totalImages; i++) {
+      const imageUrl = playlistRef.current[i].url;
+
+      const promise = new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+
+        img.onload = () => {
+          loadedCountRef.current++;
+          setLoadProgress(Math.floor((loadedCountRef.current / totalImages) * 100));
+          preloadedImagesRef.current[i] = img;
+          resolve();
+        };
+
+        img.onerror = () => {
+          // Still count as loaded to prevent blocking
+          loadedCountRef.current++;
+          setLoadProgress(Math.floor((loadedCountRef.current / totalImages) * 100));
+          preloadedImagesRef.current[i] = img; // Store anyway
+          resolve();
+        };
+
+        img.src = imageUrl;
+      });
+
+      imagePromises.push(promise);
     }
-  }, [currentFrame, started]);
+
+    // Wait for all images to load
+    await Promise.all(imagePromises);
+
+    // Start playing automatically after loading
+    setPhase('playing');
+  };
 
   // Generate random CSS filters
   const generateRandomFilters = () => {
@@ -57,10 +86,14 @@ function BreakcoreVisualizer() {
 
   // Main 30 FPS loop
   useEffect(() => {
-    if (started) {
+    if (phase === 'playing') {
       intervalRef.current = setInterval(() => {
         // Update frame
-        setCurrentFrame((prev) => (prev + 1) % playlistRef.current.length);
+        setCurrentFrame((prev) => {
+          const nextFrame = prev + 1;
+          // Loop back to start after 2 minutes
+          return nextFrame >= TOTAL_FRAMES ? 0 : nextFrame;
+        });
 
         // Generate new random filters
         setFilters(generateRandomFilters());
@@ -85,13 +118,14 @@ function BreakcoreVisualizer() {
         }
       };
     }
-  }, [started]);
+  }, [phase]);
 
   const handleStart = () => {
-    setStarted(true);
+    preloadAllImages();
   };
 
-  if (!started) {
+  // Warning screen
+  if (phase === 'warning') {
     return (
       <div className="start-screen">
         <div className="warning-container">
@@ -108,14 +142,37 @@ function BreakcoreVisualizer() {
             CLICK TO START
           </button>
           <div className="info">
-            <p>BREAKCORE VISUALIZER</p>
-            <p>2000 FRAMES @ 60 FPS</p>
+            <p>STROBE VIDEO PLAYER</p>
+            <p>{TOTAL_FRAMES} FRAMES @ {FPS} FPS</p>
+            <p>DURATION: {TOTAL_DURATION} SECONDS</p>
           </div>
         </div>
       </div>
     );
   }
 
+  // Loading screen
+  if (phase === 'loading') {
+    return (
+      <div className="start-screen">
+        <div className="warning-container">
+          <h1 className="warning-title">LOADING IMAGES...</h1>
+          <div className="progress-container">
+            <div className="progress-bar" style={{ width: `${loadProgress}%` }}></div>
+          </div>
+          <p className="warning-text">
+            {loadProgress}% ({loadedCountRef.current} / {playlistRef.current.length})
+          </p>
+          <div className="info">
+            <p>Preloading all {TOTAL_FRAMES} images before playback</p>
+            <p>This ensures smooth 30 FPS playback</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Playing screen
   const currentImage = playlistRef.current[currentFrame];
 
   const imageStyle = {
@@ -138,6 +195,9 @@ function BreakcoreVisualizer() {
     top: `${textPosition.y}%`,
   };
 
+  const elapsedSeconds = Math.floor(currentFrame / FPS);
+  const remainingSeconds = TOTAL_DURATION - elapsedSeconds;
+
   return (
     <div className="visualizer">
       <div className="image-container">
@@ -159,12 +219,7 @@ function BreakcoreVisualizer() {
       )}
 
       <div className="frame-counter">
-        FRAME: {currentFrame + 1} / {playlistRef.current.length}
-      </div>
-
-      {/* Placeholder for audio */}
-      <div className="audio-placeholder">
-        {/* Audio element can be added here */}
+        FRAME: {currentFrame + 1} / {TOTAL_FRAMES} | TIME: {elapsedSeconds}s / {TOTAL_DURATION}s
       </div>
     </div>
   );
