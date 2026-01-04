@@ -1,6 +1,6 @@
-# 🔥 BREAKCORE VISUALIZER 🔥
+# 🔥 STROBE VIDEO WEB PLAYER 🔥
 
-A rapid-fire visual experience that plays 2000 images at 30 FPS with glitch effects, random CSS filters, and breakcore aesthetics.
+A rapid-fire visual experience that plays 3600 images at 30 FPS with glitch effects, random CSS filters, and strobe aesthetics. Runs for exactly 2 minutes (120 seconds) with 30 different images per second.
 
 ## ⚠️ EPILEPSY WARNING ⚠️
 
@@ -10,8 +10,10 @@ Viewer discretion is strongly advised.
 
 ## Features
 
-- **30 FPS Engine**: Displays images at ~33ms per frame for smooth rapid-fire playback
-- **2000 Image Playlist**: Dynamically generated URLs based on curated keywords
+- **30 FPS Strobe Effect**: Displays images at exactly ~33ms per frame (30 images per second)
+- **3600 Image Playlist**: Exactly 2 minutes of content (30 fps × 120 seconds = 3600 images)
+- **Full Preloading**: ALL images are preloaded before playback starts for guaranteed smooth playback
+- **Loading Progress**: Visual progress bar shows preloading status (0-100%)
 - **Random Glitch Effects**: Every frame gets randomized CSS filters including:
   - Hue rotation (0-360°)
   - Invert (flash effects)
@@ -19,24 +21,28 @@ Viewer discretion is strongly advised.
   - Brightness & contrast variation
   - Random scaling and mirroring
 - **Text Overlays**: Random keyword overlays with neon glitch styling
+- **Time Counter**: Shows elapsed time and total duration
+- **Auto Loop**: Automatically loops back to start after 2 minutes
 - **Safety First**: Start screen with clear epilepsy warning
 
-## Keywords/Themes
+## Image Sources
 
-- Differential equation graphs
-- Physics forces
-- Monkeys
-- High school bands
-- Slingshots
-- Retro anime
-- Circuit boards
-- Glitch art
+The visualizer uses actual mathematical diagrams from Wikimedia Commons, including:
+- Markov chains and state transition diagrams
+- Stochastic processes and random walks
+- Brownian motion and diffusion
+- Probability distributions (Normal, Exponential, Gamma, Poisson, etc.)
+- Queueing theory and branching processes
+- Fractals (Mandelbrot set, Julia sets, Sierpinski triangle, Lorenz attractor)
+- Fourier analysis and signal processing
+- Topology (Möbius strip, torus, knots)
+- Complex analysis and differential equations
 
 ## Technology Stack
 
-- **React** - UI framework
+- **React** - UI framework with hooks for state management
 - **Vite** - Fast build tool and dev server
-- **LoremFlickr API** - Placeholder image service with keyword support
+- **Wikimedia Commons** - Real mathematical diagrams and visualizations
 
 ## Getting Started
 
@@ -62,11 +68,12 @@ npm run build
 
 ## How It Works
 
-1. **Image Generation**: A playlist of 2000 unique image URLs is generated using the LoremFlickr API with cache-busting parameters
-2. **Preloading**: Images are preloaded in batches of 50 to ensure smooth playback
-3. **Frame Loop**: A setInterval runs every ~33ms to update the current frame
+1. **Image Generation**: A playlist of 3600 unique image URLs is generated from Wikimedia Commons diagrams with size variations
+2. **Full Preloading**: ALL 3600 images are preloaded before playback starts, with a progress bar showing status
+3. **Frame Loop**: A setInterval runs every ~33ms (30 FPS) to update the current frame
 4. **Effects**: Each frame gets randomized CSS filters and transforms
 5. **Text Overlays**: Random keywords appear with glitch text effects
+6. **Duration Control**: Plays for exactly 2 minutes (120 seconds) then loops back to start
 
 ## Customization
 
