@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { generateImagePlaylist, getRandomKeyword } from './imageGenerator';
 import './BreakcoreVisualizer.css';
 
-const FPS = 30;
-const FRAME_DURATION = 1000 / FPS; // ~33ms
+const FPS = 60; // Doubled to 60 FPS for true breakcore speed
+const FRAME_DURATION = 1000 / FPS; // ~16ms
 
 function BreakcoreVisualizer() {
   const [started, setStarted] = useState(false);
@@ -22,17 +22,18 @@ function BreakcoreVisualizer() {
     playlistRef.current = generateImagePlaylist();
   }, []);
 
-  // Preload images in batches to prevent lag
+  // Aggressively preload images to prevent lag
   useEffect(() => {
     if (started && playlistRef.current.length > 0) {
-      // Preload next 50 images
+      // Preload next 200 images aggressively
       const startIdx = currentFrame;
-      const endIdx = Math.min(startIdx + 50, playlistRef.current.length);
+      const endIdx = Math.min(startIdx + 200, playlistRef.current.length);
 
       for (let i = startIdx; i < endIdx; i++) {
         const url = playlistRef.current[i].url;
         if (!preloadedImagesRef.current.has(url)) {
           const img = new Image();
+          img.crossOrigin = "anonymous";
           img.src = url;
           preloadedImagesRef.current.add(url);
         }
@@ -108,7 +109,7 @@ function BreakcoreVisualizer() {
           </button>
           <div className="info">
             <p>BREAKCORE VISUALIZER</p>
-            <p>2000 FRAMES @ 30 FPS</p>
+            <p>2000 FRAMES @ 60 FPS</p>
           </div>
         </div>
       </div>
@@ -141,11 +142,13 @@ function BreakcoreVisualizer() {
     <div className="visualizer">
       <div className="image-container">
         <img
+          key={currentFrame}
           src={currentImage?.url}
           alt={`Frame ${currentFrame}`}
           className="visualizer-image"
           style={imageStyle}
           loading="eager"
+          decoding="sync"
         />
       </div>
 
